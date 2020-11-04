@@ -1,0 +1,4 @@
+﻿src/.vs
+**/obj
+**/bin
+src/UpgradeLog.htm
