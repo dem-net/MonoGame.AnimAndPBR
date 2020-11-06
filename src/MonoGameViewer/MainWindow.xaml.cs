@@ -27,7 +27,7 @@ namespace MonoGameViewer
             InitializeComponent();
         }
 
-        private void _OnClick_LoadModel(object sender, RoutedEventArgs e) { _LoadModel(sender); }        
+        private void _OnClick_LoadModel(object sender, RoutedEventArgs e) { _LoadModel(sender); }
 
         private static void _LoadModel(object sender)
         {
@@ -55,13 +55,17 @@ namespace MonoGameViewer
                 var delta = _Last.HasValue ? point - _Last.Value : point - point;
                 _Last = point;
 
-                if (e.LeftButton == MouseButtonState.Released) return;
-
+                if (e.LeftButton == MouseButtonState.Released && e.RightButton == MouseButtonState.Released) return;
+                
                 const float speed = 1f / 100f;
 
                 if (fe.DataContext is MainScene scene)
                 {
-                    scene.RotateModel((float)delta.X* speed, (float)delta.Y* speed);                    
+                    if (e.LeftButton != MouseButtonState.Released)
+                        scene.RotateModel((float)delta.X * speed, (float)delta.Y * speed);
+
+                    if (e.RightButton != MouseButtonState.Released)
+                        scene.TranslateModel((float)delta.X, (float)delta.Y);
                 }
             }
         }

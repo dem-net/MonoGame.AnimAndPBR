@@ -28,6 +28,7 @@ namespace MonoGameViewer
         private ModelInstance _ModelInstance;
 
         private Quaternion _Rotation = Quaternion.Identity;
+        private Vector3 _Translation = Vector3.Zero;
         private float _Zoom = 2.5f;
 
         private readonly GlobalLight _GlobalLight = new GlobalLight();
@@ -46,7 +47,7 @@ namespace MonoGameViewer
                 if (value == _UseClassicEffects) return;
                 _UseClassicEffects = value;
                 _ProcessModel();
-            }            
+            }
         }
 
         [PropertyTools.DataAnnotations.Browsable(false)]
@@ -83,9 +84,14 @@ namespace MonoGameViewer
                     _ModelInstance = null;
                 }
             }
-            catch(Exception ex) { System.Windows.MessageBox.Show(ex.Message, "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error); return; }
-            
+            catch (Exception ex) { System.Windows.MessageBox.Show(ex.Message, "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error); return; }
+
             _ProcessModel();
+        }
+
+        internal void TranslateModel(float x, float y)
+        {
+            _Translation += new Vector3(x, -y, 0);
         }
 
         private void _ProcessModel()
@@ -137,7 +143,7 @@ namespace MonoGameViewer
 
             if (_ModelInstance == null) return;
 
-            _ModelInstance.Armature.SetAnimationFrame(0, (float)gameTime.TotalGameTime.TotalSeconds);            
+            _ModelInstance.Armature.SetAnimationFrame(0, (float)gameTime.TotalGameTime.TotalSeconds);
 
             var lookAt = _ModelSphere.Center;
             var camPos = _ModelSphere.Center + new Vector3(0, 0, _ModelSphere.Radius * _Zoom);
@@ -148,20 +154,20 @@ namespace MonoGameViewer
             env.SetExposure((float)_GlobalLight.Exposure / 10.0f);
             env.SetAmbientLight(_GlobalLight.ToXna());
 
-            for(int i=0; i< _PunctualLights.Length; ++i)
+            for (int i = 0; i < _PunctualLights.Length; ++i)
             {
                 env.SetDirectLight(i, _PunctualLights[i].Direction, _PunctualLights[i].XnaColor, _PunctualLights[i].Intensity / 10.0f);
-            }            
+            }
 
             if (_ModelInstance != null)
             {
-                _ModelInstance.WorldMatrix = Matrix.CreateFromQuaternion(_Rotation);
+                _ModelInstance.WorldMatrix = Matrix.CreateFromQuaternion(_Rotation) * Matrix.CreateTranslation(_Translation);
 
                 var ctx = new ModelDrawingContext(this.GraphicsDevice);
 
                 ctx.NearPlane = Math.Min(1, _ModelSphere.Radius);
 
-                ctx.SetCamera(camera);                
+                ctx.SetCamera(camera);
                 ctx.DrawModelInstance(env, _ModelInstance);
             }
         }
@@ -172,7 +178,7 @@ namespace MonoGameViewer
 
     public class GlobalLight
     {
-        [PropertyTools.DataAnnotations.Slidable(0,100)]
+        [PropertyTools.DataAnnotations.Slidable(0, 100)]
         [PropertyTools.DataAnnotations.WideProperty]
         public int Exposure { get; set; } = 25;
 
@@ -185,12 +191,12 @@ namespace MonoGameViewer
     {
         public static PunctualLight CreateDefault(int idx)
         {
-            var l = new PunctualLight();            
+            var l = new PunctualLight();
 
             l.Intensity = 15;
             l.Color = System.Windows.Media.Colors.White;
 
-            switch(idx)
+            switch (idx)
             {
                 case 0:
                     l.DirectionAngle = 60;
@@ -209,13 +215,13 @@ namespace MonoGameViewer
                     l.ElevationAngle = -50;
                     l.Color = System.Windows.Media.Colors.OrangeRed;
                     break;
-            }            
+            }
 
             return l;
-        }                
+        }
 
         [PropertyTools.DataAnnotations.Category("Source")]
-        [PropertyTools.DataAnnotations.Slidable(-180,180)]
+        [PropertyTools.DataAnnotations.Slidable(-180, 180)]
         // [PropertyTools.DataAnnotations.WideProperty]
         [PropertyTools.DataAnnotations.DisplayName("Direction")]
         public int DirectionAngle { get; set; }
@@ -225,12 +231,12 @@ namespace MonoGameViewer
         //[PropertyTools.DataAnnotations.WideProperty]
         [PropertyTools.DataAnnotations.DisplayName("Elevation")]
         public int ElevationAngle { get; set; }
-        
-        [PropertyTools.DataAnnotations.Category("Properties")]        
+
+        [PropertyTools.DataAnnotations.Category("Properties")]
         public System.Windows.Media.Color Color { get; set; }
 
         [PropertyTools.DataAnnotations.Category("Properties")]
-        [PropertyTools.DataAnnotations.Slidable(0,100)]
+        [PropertyTools.DataAnnotations.Slidable(0, 100)]
         [PropertyTools.DataAnnotations.WideProperty]
         public int Intensity { get; set; }
 
@@ -247,6 +253,6 @@ namespace MonoGameViewer
         }
 
         [PropertyTools.DataAnnotations.Browsable(false)]
-        public Color XnaColor => new Color(Color.ScR, Color.ScG, Color.ScB);        
+        public Color XnaColor => new Color(Color.ScR, Color.ScG, Color.ScB);
     }
 }
